@@ -13,3 +13,17 @@
 
 # Dependency directories (remove the comment below to include it)
 # vendor/
+
+go.sum
+
+### MacOS ###
+.DS_Store
+
+### VS Code ###
+.vscode
+
+### IntelliJ IDEA ###
+.idea
+*.iml
+*.ipr
+*.iws

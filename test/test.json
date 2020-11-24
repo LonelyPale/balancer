@@ -1,0 +1,38 @@
+[
+  {
+    "alive": true,
+    "failure": 0,
+    "success": 400,
+    "url": "http://localhost:10000/api1"
+  },
+  {
+    "alive": false,
+    "failure": 100,
+    "success": 0,
+    "url": "http://localhost:10000/api2"
+  },
+  {
+    "alive": false,
+    "failure": 100,
+    "success": 0,
+    "url": "http://localhost:10000/api3"
+  },
+  {
+    "alive": true,
+    "failure": 0,
+    "success": 400,
+    "url": "http://localhost:10000/api4"
+  },
+  {
+    "alive": true,
+    "failure": 0,
+    "success": 400,
+    "url": "http://localhost:10000/api5"
+  },
+  {
+    "alive": false,
+    "failure": 100,
+    "success": 0,
+    "url": "http://localhost:10000/api6"
+  }
+]
