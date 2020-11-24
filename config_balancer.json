@@ -1,0 +1,44 @@
+{
+  "business-1": {
+    "balancer": {
+      "name": "business-1",
+      "type": "RoundRobin",
+      "timeout": 20,
+      "doctor": {
+        "enable": true,
+        "type": "Default",
+        "spec": "*/10 * * * *"
+      },
+      "statistic": {
+        "enable": true,
+        "port": 30001
+      },
+      "urls": [
+        "192.168.1.101",
+        "192.168.1.102",
+        "192.168.1.103"
+      ]
+    }
+  },
+  "business-2": {
+    "balancer": {
+      "name": "business-2",
+      "type": "RoundRobin",
+      "timeout": 20,
+      "doctor": {
+        "enable": true,
+        "type": "Default",
+        "spec": "*/10 * * * *"
+      },
+      "statistic": {
+        "enable": true,
+        "port": 30002
+      },
+      "urls": [
+        "192.168.1.201",
+        "192.168.1.202",
+        "192.168.1.203"
+      ]
+    }
+  }
+}
