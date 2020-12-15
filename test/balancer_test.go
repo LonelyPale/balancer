@@ -9,9 +9,9 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/lonelypale/balancer"
-	"github.com/lonelypale/balancer/httpclient"
-	_ "github.com/lonelypale/balancer/round_robin" //注册实际使用的负载算法
+	"github.com/bytom/blockcenter/balancer"
+	"github.com/bytom/blockcenter/balancer/httpclient"
+	_ "github.com/bytom/blockcenter/balancer/round_robin" //Register the actual load algorithm used
 )
 
 func Test(t *testing.T) {
@@ -65,9 +65,9 @@ func TestBalancer(t *testing.T) {
 			"http://localhost:10000/api1",
 			"http://localhost:10000/api2",
 			"http://localhost:10000/api3",
-			"http://localhost:10000/api4",
-			"http://localhost:10000/api5",
-			"http://localhost:10000/api6",
+			"localhost:10000/api4",
+			"localhost:10000/api5",
+			"localhost:10000/api6",
 		},
 	}
 
@@ -124,4 +124,5 @@ func TestBalancer(t *testing.T) {
 			assert.Equal(t, m["failure"], float64(100))
 		}
 	}
+
 }

@@ -2,10 +2,8 @@ package round_robin
 
 import (
 	"errors"
-	"sync"
-
-	"github.com/lonelypale/balancer"
-	"github.com/lonelypale/balancer/base"
+	"github.com/bytom/blockcenter/balancer"
+	"github.com/bytom/blockcenter/balancer/base"
 )
 
 // Name is the name of RoundRobin Builder.
@@ -22,30 +20,29 @@ func newBuilder() balancer.Builder {
 
 type rrPickerBuilder struct{}
 
-func (*rrPickerBuilder) Build(backends []*balancer.Backend) balancer.Picker {
+func (*rrPickerBuilder) Build(backends *balancer.Backends) balancer.Picker {
 	return &rrPicker{
 		backends: backends,
 	}
 }
 
 type rrPicker struct {
-	backends []*balancer.Backend
+	backends *balancer.Backends
 	current  int
-	mux      sync.RWMutex
 }
 
 func (p *rrPicker) Pick() (*balancer.Backend, error) {
-	p.mux.Lock()
-	defer p.mux.Unlock()
+	p.backends.RLock()
+	defer p.backends.RUnlock()
 
-	length := len(p.backends)
+	length := p.backends.Len()
 	next := p.current + 1
 	l := next + length
 	for i := next; i < l; i++ {
 		idx := i % length
-		if p.backends[idx].State.Alive() {
+		if backend, ok := p.backends.Get(idx); ok && backend.State.Alive() {
 			p.current = idx
-			return p.backends[idx], nil
+			return backend, nil
 		}
 	}
 

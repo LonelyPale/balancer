@@ -6,7 +6,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/lonelypale/balancer"
+	"github.com/bytom/blockcenter/balancer"
 )
 
 var (
@@ -44,7 +44,7 @@ func newBuilder() balancer.DoctorBuilder {
 	}
 }
 
-func (d *doctorBuilder) Build(ping balancer.PingHandler, backends []*balancer.Backend) balancer.Doctor {
+func (d *doctorBuilder) Build(ping balancer.PingHandler, backends *balancer.Backends) balancer.Doctor {
 	return &doctor{
 		backends: backends,
 		ping:     ping,
@@ -56,14 +56,14 @@ func (d *doctorBuilder) Name() string {
 }
 
 type doctor struct {
-	backends []*balancer.Backend
+	backends *balancer.Backends
 	ping     balancer.PingHandler
 }
 
 func (d *doctor) HealthCheck() {
 	var wg sync.WaitGroup
 
-	for _, backend := range d.backends {
+	d.backends.Range(func(index int, backend *balancer.Backend) bool {
 		if !backend.State.Alive() {
 			wg.Add(1)
 			go func(backend *balancer.Backend) {
@@ -82,7 +82,9 @@ func (d *doctor) HealthCheck() {
 				}
 			}(backend)
 		}
-	}
+
+		return true
+	})
 
 	wg.Wait()
 }

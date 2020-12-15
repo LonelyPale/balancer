@@ -5,10 +5,10 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/lonelypale/balancer"
-	"github.com/lonelypale/balancer/health"
-	"github.com/lonelypale/balancer/statistic"
-	"github.com/lonelypale/balancer/task"
+	"github.com/bytom/blockcenter/balancer"
+	"github.com/bytom/blockcenter/balancer/health"
+	"github.com/bytom/blockcenter/balancer/statistic"
+	"github.com/bytom/blockcenter/balancer/task"
 )
 
 type baseBuilder struct {
@@ -24,9 +24,12 @@ func NewBalancerBuilder(name string, pb balancer.PickerBuilder) balancer.Builder
 }
 
 func (bb *baseBuilder) Build(client *http.Client, opts *balancer.Options) balancer.Balancer {
-	backends := make([]*balancer.Backend, len(opts.Urls))
-	for i, url := range opts.Urls {
-		backends[i] = balancer.NewBackend(url)
+	backends := balancer.NewBackends()
+	for _, url := range opts.Urls {
+		if len(url) == 0 {
+			continue
+		}
+		backends.Add(balancer.NewBackend(url, opts.CacheSize))
 	}
 
 	var doctor balancer.Doctor
@@ -63,8 +66,6 @@ func (bb *baseBuilder) Build(client *http.Client, opts *balancer.Options) balanc
 		backends:  backends,
 	}
 
-	balancer.Manager.Register(opts.Name, loadBalancing)
-
 	if opts.Statistic.Enable {
 		go statistic.ServerAndRun(&opts.Statistic)
 	}
@@ -77,12 +78,23 @@ func (bb *baseBuilder) Name() string {
 }
 
 type baseBalancer struct {
-	statistic *balancer.StatisticOptions
 	client    *http.Client
+	backends  *balancer.Backends
+	statistic *balancer.StatisticOptions
 	picker    balancer.Picker
 	doctor    balancer.Doctor
 	done      balancer.DoneHandler
-	backends  []*balancer.Backend
+}
+
+func (b *baseBalancer) Pick() (*balancer.Backend, error) {
+	backend, err := b.picker.Pick()
+	if err != nil {
+		return nil, err
+	}
+	if backend == nil {
+		return nil, errors.New("Picker.Pick(): nil backend")
+	}
+	return backend, nil
 }
 
 func (b *baseBalancer) Do(req *http.Request) (resp *http.Response, err error) {
@@ -114,7 +126,12 @@ func (b *baseBalancer) Do(req *http.Request) (resp *http.Response, err error) {
 		return nil, errors.New("Picker.Pick(): nil backend")
 	}
 
-	newurl := balancer.URLJoin(backend.URL, url)
+	var newurl string
+	if strings.HasPrefix(backend.URL, "http://") || strings.HasPrefix(backend.URL, "https://") {
+		newurl = balancer.URLJoin(backend.URL, url)
+	} else {
+		newurl = balancer.URLJoin("http://", backend.URL, url)
+	}
 
 	if req, err = http.NewRequest(req.Method, newurl, req.Body); err != nil {
 		return nil, err
@@ -147,6 +164,6 @@ func (b *baseBalancer) Close() {
 	}
 }
 
-func (b *baseBalancer) Backends() []*balancer.Backend {
+func (b *baseBalancer) Backends() *balancer.Backends {
 	return b.backends
 }

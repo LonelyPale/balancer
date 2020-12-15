@@ -3,38 +3,24 @@ package httpclient
 import (
 	"bytes"
 	"encoding/json"
-	"fmt"
 	"io/ioutil"
 	"net/http"
-	"time"
 
-	"github.com/lonelypale/balancer"
+	"github.com/bytom/blockcenter/balancer"
 )
 
 type HttpClient struct {
-	client   *http.Client
-	balancer balancer.Balancer
+	Balancer balancer.Balancer
 }
 
 func New(opts balancer.Options) (*HttpClient, error) {
-	builder := balancer.Get(opts.Type)
-	if builder == nil {
-		return nil, fmt.Errorf("unknown load balance type: %s", opts.Type)
-	}
-
-	if opts.Timeout <= 0 {
-		opts.Timeout = 30
-	}
-	client := &http.Client{Timeout: time.Duration(opts.Timeout) * time.Second}
-
-	loadBalancing := builder.Build(client, &opts)
-	if loadBalancing == nil {
-		return nil, fmt.Errorf("%s load balance failed to build", opts.Type)
+	loadBalancing, err := balancer.Manager.Balancer(&opts)
+	if err != nil {
+		return nil, err
 	}
 
 	return &HttpClient{
-		client:   client,
-		balancer: loadBalancing,
+		Balancer: loadBalancing,
 	}, nil
 }
 
@@ -55,12 +41,12 @@ func (h *HttpClient) PostWithHeader(url string, header map[string]string, payloa
 }
 
 func (h *HttpClient) Do(req *http.Request) (*http.Response, error) {
-	resp, err := h.balancer.Do(req)
+	resp, err := h.Balancer.Do(req)
 
 	//Failure retry
 	if err != nil || (resp != nil && resp.StatusCode >= 400) {
 		for i := 0; i < 3; i++ {
-			resp, err = h.balancer.Do(req)
+			resp, err = h.Balancer.Do(req)
 			if err == nil && (resp != nil && resp.StatusCode < 400) { //success
 				return resp, err
 			}

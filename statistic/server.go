@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/lonelypale/balancer"
+	"github.com/bytom/blockcenter/balancer"
 )
 
 func ServerAndRun(statistic *balancer.StatisticOptions) {
@@ -26,8 +26,8 @@ func indexHandler(w http.ResponseWriter, r *http.Request) {
 
 	if lb != nil {
 		result := make([]interface{}, 0)
-		backends := lb.Backends()
-		for _, backend := range backends {
+
+		lb.Backends().Range(func(index int, backend *balancer.Backend) bool {
 			url := backend.URL
 			alive := backend.State.Alive()
 			success := backend.Statistic.Success()
@@ -38,7 +38,8 @@ func indexHandler(w http.ResponseWriter, r *http.Request) {
 			content["success"] = success
 			content["failure"] = failure
 			result = append(result, content)
-		}
+			return true
+		})
 
 		var err error
 		body, err = json.Marshal(result)

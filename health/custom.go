@@ -5,7 +5,7 @@ import (
 	"io/ioutil"
 	"net/http"
 
-	"github.com/lonelypale/balancer"
+	"github.com/bytom/blockcenter/balancer"
 )
 
 func BytomPing(backend *balancer.Backend) error {
